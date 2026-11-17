@@ -370,7 +370,7 @@ impl Simulator {
             next_brains.push(child);
         }
 
-        for (agent, brain) in self.agents.iter_mut().zip(next_brains.into_iter()) {
+        for (agent, brain) in self.agents.iter_mut().zip(next_brains) {
             agent.brain = brain;
             agent.reset(
                 self.track.spawn_x,
