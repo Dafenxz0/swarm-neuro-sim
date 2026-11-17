@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Swarm Neuro-Sim // Rust + WASM</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="hud-bar">
+      <div class="brand">
+        <span class="brand-mark">◈</span>
+        <span class="brand-title">SWARM NEURO-SIM</span>
+        <span class="brand-tag">RUST → WASM32</span>
+      </div>
+
+      <div class="telemetry-strip" aria-label="Simulation Telemetry">
+        <div class="metric">
+          <span class="metric-label">GEN</span>
+          <span class="metric-value" id="stat-gen">1</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">ALIVE</span>
+          <span class="metric-value" id="stat-alive">220/220</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">BEST FIT</span>
+          <span class="metric-value accent-emerald" id="stat-best">0.0</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">PEAK</span>
+          <span class="metric-value" id="stat-peak">0.0</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">AVG FIT</span>
+          <span class="metric-value accent-cyan" id="stat-avg">0.0</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">LAPS</span>
+          <span class="metric-value" id="stat-laps">0</span>
+        </div>
+      </div>
+
+      <div class="hud-actions">
+        <div class="segmented" role="group" aria-label="Simulation Speed">
+          <button class="seg-btn active" data-speed="1">1x</button>
+          <button class="seg-btn" data-speed="5">5x</button>
+          <button class="seg-btn" data-speed="20">20x</button>
+        </div>
+        <button class="btn primary" id="btn-pause">PAUSE</button>
+        <button class="btn" id="btn-next-gen" title="Force evolve next generation">NEXT GEN</button>
+        <button class="btn" id="btn-mutate" title="Apply mutation burst to non-elite agents">MUTATE</button>
+        <button class="btn danger" id="btn-reset" title="Reset population">RESET</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="arena-panel">
+        <div class="arena-toolbar">
+          <div class="tool-group">
+            <label class="field-label" for="preset-select">TRACK</label>
+            <select id="preset-select" class="select">
+              <option value="0">01 // Circuit Oval</option>
+              <option value="1">02 // Technical S-Curves</option>
+              <option value="2">03 // Spiral Gauntlet</option>
+              <option value="3">04 // Open Slalom</option>
+            </select>
+          </div>
+
+          <div class="tool-group" role="group" aria-label="Mouse Tool">
+            <span class="field-label">TOOL</span>
+            <button class="seg-btn active" data-tool="observe">OBSERVE</button>
+            <button class="seg-btn" data-tool="draw">DRAW WALL</button>
+            <button class="seg-btn" data-tool="erase">ERASE WALL</button>
+          </div>
+
+          <div class="tool-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="chk-checkpoints" checked />
+              <span>GATES</span>
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="chk-rays" checked />
+              <span>RAYS</span>
+            </label>
+          </div>
+
+          <div class="tick-bar-wrap" title="Generation tick budget">
+            <span class="field-label">TICK</span>
+            <div class="tick-bar"><div class="tick-fill" id="tick-fill"></div></div>
+            <span class="mono-dim" id="stat-ticks">0/1600</span>
+          </div>
+        </div>
+
+        <div class="canvas-stage">
+          <canvas id="arena-canvas"></canvas>
+          <div class="banner hidden" id="status-banner"></div>
+          <div class="hint-overlay" id="hint-overlay">
+            Drag to draw walls in DRAW mode · Right-click drag erases walls · Space pauses
+          </div>
+        </div>
+      </section>
+
+      <aside class="inspector-rail">
+        <section class="panel-card">
+          <div class="card-header">
+            <span>BEST AGENT // LIVE NEURAL NET</span>
+            <span class="mono-dim">8 → 10 → 2</span>
+          </div>
+          <canvas id="nn-canvas" width="320" height="260"></canvas>
+          <div class="nn-legend">
+            <span><i class="swatch pos"></i> +weight / act</span>
+            <span><i class="swatch neg"></i> -weight / act</span>
+            <span class="mono-dim" id="nn-outputs">STR +0.00 · THR 0.00</span>
+          </div>
+        </section>
+
+        <section class="panel-card">
+          <div class="card-header">
+            <span>FITNESS EVOLUTION</span>
+            <span class="mono-dim" id="history-count">0 GENS</span>
+          </div>
+          <canvas id="history-canvas" width="320" height="140"></canvas>
+        </section>
+
+        <section class="panel-card">
+          <div class="card-header">
+            <span>EVOLUTION PARAMETERS</span>
+            <span class="mono-dim">POP 220</span>
+          </div>
+          <div class="param-list">
+            <label class="param-row">
+              <span>MUTATION RATE</span>
+              <input type="range" id="slider-mut-rate" min="2" max="40" value="12" />
+              <span class="mono-val" id="val-mut-rate">12%</span>
+            </label>
+            <label class="param-row">
+              <span>MUTATION SIGMA</span>
+              <input type="range" id="slider-mut-sigma" min="5" max="100" value="25" />
+              <span class="mono-val" id="val-mut-sigma">0.25</span>
+            </label>
+          </div>
+          <div class="footer-note">
+            7× raycast proximity sensors + velocity → tanh MLP. Elitism (top 6%) + tournament crossover + Gaussian mutation running in pure Rust WASM.
+          </div>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
