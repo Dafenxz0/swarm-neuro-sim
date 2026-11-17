@@ -358,7 +358,11 @@ impl Simulator {
             let p1 = self.tournament_pick(&order[..pool_limit]);
             let p2 = self.tournament_pick(&order[..pool_limit]);
             let mut child = if self.rng.next_f32() < 0.75 {
-                NeuralNet::crossover(&self.agents[p1].brain, &self.agents[p2].brain, &mut self.rng)
+                NeuralNet::crossover(
+                    &self.agents[p1].brain,
+                    &self.agents[p2].brain,
+                    &mut self.rng,
+                )
             } else {
                 self.agents[p1].brain.clone()
             };
